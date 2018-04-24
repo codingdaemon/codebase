@@ -51,10 +51,21 @@ public class Regex {
       return search(string, stringIndex, regex, regexIndex + 1);
     }
 
+//    TODO : if there is an endswith $ then should we do the reverse search for better performance?
+
+    boolean endsWith = false;
+    if(regex.endsWith("$")){
+      endsWith = true;
+      regex = regex.substring(0, regex.length()-1); // removed end $
+    }
+//    if there is no endswith then do the normal search so that first results are shown first.
     for (int i = stringIndex; i < string.length(); i++) {
       for (int j = i; j < string.length(); j++) {
-        if (match(string.substring(i, j + 1), 0, regex, regexIndex))
-          return Optional.of(new Match(i, j));
+        if (match(string.substring(i, j + 1), 0, regex, regexIndex)){
+          if(!endsWith || j == string.length() - 1)
+            return Optional.of(new Match(i, j));
+        }
+
       }
     }
 
@@ -65,21 +76,29 @@ public class Regex {
     return search(string, 0, regex, 0);
   }
 
+  /**
+   * ^ and $ are not treated as special
+   * @param string
+   * @param stringIndex
+   * @param regex
+   * @param regexIndex
+   * @return
+   */
   private static boolean match(String string, int stringIndex, String regex, int regexIndex) {
     // success case
     if (stringIndex == string.length() && regexIndex == regex.length()) {
       return true;
-    } else if (regexIndex == regex.length() - 1 && regex.charAt(regexIndex) == '$' && stringIndex == string.length()) {
-      return true;
+//    } else if (regexIndex == regex.length() - 1 && regex.charAt(regexIndex) == '$' && stringIndex == string.length()) {
+//      return true;
     } else if (stringIndex < string.length() && regexIndex >= regex.length()) {
       return false;
     }
 
     char currRegChar = regex.charAt(regexIndex);
-    if (isStart(currRegChar) && regexIndex == 0 && stringIndex == 0) {
-//      case for start
-      return match(string, stringIndex, regex, regexIndex + 1);
-    }
+//    if (isStart(currRegChar) && regexIndex == 0 && stringIndex == 0) {
+////      case for start
+//      return match(string, stringIndex, regex, regexIndex + 1);
+//    }
 
     if (isStar(currRegChar)) {
       throw new RuntimeException("IllegalRegex unplaced star");
@@ -144,18 +163,20 @@ public class Regex {
     Assert.assertFalse(match(".*dd", "cbd"));
     Assert.assertFalse(match("c.*dd", "cbd"));
 
-    Assert.assertFalse(match("a", "^a.*c"));
+    Assert.assertTrue(match("^a^c", "^a^c"));
+    Assert.assertTrue(match("^a$c$", "^a$c$"));
 
-    Assert.assertTrue(match("a", "^a.*"));
+    Assert.assertFalse(match("a", "^a.*"));
+    Assert.assertTrue(match("^a", "^a.*"));
 
     Assert.assertTrue(match("a", "."));
 
 
-    Assert.assertTrue(match("a", ".$"));
-    Assert.assertFalse(match("ab", ".$"));
-    Assert.assertFalse(match("a.", ".$"));
-    Assert.assertFalse(match("..", ".$"));
-    Assert.assertTrue(match(".", ".$"));
+    Assert.assertTrue(match("a", "."));
+    Assert.assertFalse(match("ab", "."));
+    Assert.assertFalse(match("a.", "."));
+    Assert.assertFalse(match("..", "."));
+    Assert.assertTrue(match(".", "."));
     Assert.assertTrue(match(".", "."));
     Assert.assertFalse(match(".", ".."));
     Assert.assertFalse(match("a", ".."));
@@ -248,14 +269,14 @@ public class Regex {
 
     match = search("aabcd", "^a.*d$");
     Assert.assertTrue(match.isPresent());
+    Assert.assertEquals(0, match.get().getStart());
+    Assert.assertEquals(4, match.get().getEnd());
+
 
     match = search("aabcd", "^ab*c*d*");
     Assert.assertTrue(match.isPresent());
 
     match = search("aabcd", "^a.*c$");
-    Assert.assertFalse(match.isPresent());
-
-    match = search("aabcd", "acd");
     Assert.assertFalse(match.isPresent());
 
     match = search("aabcd", "acd");

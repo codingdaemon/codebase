@@ -88,18 +88,11 @@ public class Regex {
     // success case
     if (stringIndex == string.length() && regexIndex == regex.length()) {
       return true;
-//    } else if (regexIndex == regex.length() - 1 && regex.charAt(regexIndex) == '$' && stringIndex == string.length()) {
-//      return true;
     } else if (stringIndex < string.length() && regexIndex >= regex.length()) {
       return false;
     }
 
     char currRegChar = regex.charAt(regexIndex);
-//    if (isStart(currRegChar) && regexIndex == 0 && stringIndex == 0) {
-////      case for start
-//      return match(string, stringIndex, regex, regexIndex + 1);
-//    }
-
     if (isStar(currRegChar)) {
       throw new RuntimeException("IllegalRegex unplaced star");
     } else {
